@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมหนอนเต็มหน้าจอ</title>
+    <style>
+        * { margin: 0; padding: 0; overflow: hidden; }
+        canvas { display: block; background: #222; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        let snake = [];
+        let length = 15;
+        let segmentSize = 8;
+        let speed = 20;
+        let waveOffset = 0;
+
+        for (let i = 0; i < length; i++) {
+            snake.push({ x: canvas.width / 2 - i * segmentSize, y: canvas.height / 2 });
+        }
+
+        let apple = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height
+        };
+        let score = 0;
+
+        canvas.addEventListener("mousemove", (e) => {
+            let targetX = e.clientX;
+            let targetY = e.clientY;
+            let dx = targetX - snake[0].x;
+            let dy = targetY - snake[0].y;
+            let length = Math.sqrt(dx * dx + dy * dy);
+
+            if (length > 0) {
+                snake[0].x += (dx / length) * speed;
+                snake[0].y += (dy / length) * speed;
+            }
+        });
+
+        function update() {
+            waveOffset += 0.1;
+
+            for (let i = snake.length - 1; i > 0; i--) {
+                let angle = Math.sin(waveOffset - i * 0.5) * 10;
+                let prevSegment = snake[i - 1];
+
+                snake[i].x = prevSegment.x - Math.cos(angle) * segmentSize;
+                snake[i].y = prevSegment.y - Math.sin(angle) * segmentSize;
+            }
+
+            if (Math.abs(snake[0].x - apple.x) < 10 && Math.abs(snake[0].y - apple.y) < 10) {
+                score++;
+                apple = { x: Math.random() * canvas.width, y: Math.random() * canvas.height };
+                snake.push({ x: snake[snake.length - 1].x, y: snake[snake.length - 1].y });
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = "#222";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(apple.x, apple.y, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let i = 0; i < snake.length; i++) {
+    let t = i / snake.length;
+    let color = `rgb(${255 * t}, ${100 * (1 - t)}, 255)`;
+    ctx.fillStyle = color;
+    
+    ctx.beginPath();
+    ctx.ellipse(snake[i].x, snake[i].y, segmentSize * 1.5, segmentSize, 0, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+</body>
+</html>
